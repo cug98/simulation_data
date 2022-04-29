@@ -23,8 +23,6 @@ def add_timestamps(raw_data):
     # time diff for complete process
     raw_data['b1_b5_diff'] = (raw_data['b5_timestamp'] - raw_data['b1_timestamp'])
 
-    print(raw_data.head(5))
-
     return raw_data
 
 
@@ -70,8 +68,9 @@ def do_stuff(df, time_name):
     plot_arrivals(df[df['type'] == 'economy'], 'economy ' + time_name)
     plot_arrivals(df[df['type'] == 'business'], 'business ' + time_name)
 
-    get_basic_analysis(df[df['type'] == 'economy'], 'economy')
-    get_basic_analysis(df[df['type'] == 'business'], 'business')
+    get_basic_analysis(df[df['type'] == 'economy'], 'economy ' + time_name)
+    get_basic_analysis(df[df['type'] == 'business'], 'business ' + time_name)
+    get_basic_analysis(df, 'all ' + time_name)
 
 
 if __name__ == '__main__':
@@ -79,8 +78,12 @@ if __name__ == '__main__':
 
     data_frame = add_timestamps(data_frame)
 
+    print(len(data_frame))
     data_frame_weekday = data_frame[data_frame.is_weekday]
     do_stuff(data_frame_weekday, 'weekday')
 
     data_frame_weekend = data_frame[data_frame.is_weekday == False]
     do_stuff(data_frame_weekend, 'weekend')
+
+    do_stuff(data_frame, 'complete')
+    print(len(data_frame))
