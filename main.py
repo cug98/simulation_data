@@ -6,18 +6,32 @@ import numpy as np
 import pandas as pd
 
 
-def add_timestamps(raw_data):
+def cleanup_data(raw_data):
+    """ remove every passenger with empty leaving time from dataframe """
     # remove blanks
     raw_data.replace("", np.nan, inplace=True)
     raw_data.dropna(subset=['b5'], inplace=True)
+    return raw_data
 
+
+def add_timestamps(raw_data):
+    """ add new columns with unix timestamps in dataframe respective for all gates """
     # create new columns with timestamps
     raw_data['b1_timestamp'] = raw_data.apply(lambda row: to_timestamp(row, 'b1'), axis=1)
     raw_data['b2_timestamp'] = raw_data.apply(lambda row: to_timestamp(row, 'b2'), axis=1)
     raw_data['b3_timestamp'] = raw_data.apply(lambda row: to_timestamp(row, 'b3'), axis=1)
     raw_data['b4_timestamp'] = raw_data.apply(lambda row: to_timestamp(row, 'b4'), axis=1)
     raw_data['b5_timestamp'] = raw_data.apply(lambda row: to_timestamp(row, 'b5'), axis=1)
+
+    return raw_data
+
+
+def add_data_fields(raw_data):
+    """ add extra columns like time for completion for every passenger """
+    # boolean value whether day of arrival is weekday or not
     raw_data['is_weekday'] = raw_data.apply(lambda row: is_weekday(row), axis=1)
+
+    # hour of arrival
     raw_data['arrival_time'] = raw_data.apply(lambda row: get_daytime(row), axis=1)
 
     # time diff for complete process
@@ -26,19 +40,23 @@ def add_timestamps(raw_data):
     return raw_data
 
 
-def to_timestamp(s, column_name):
-    return time.mktime(datetime.strptime(s[column_name], '%d.%m.%Y %H:%M:%S').timetuple())
+def to_timestamp(row, column_name):
+    """ returns timestamp from given row and given column name """
+    return time.mktime(datetime.strptime(row[column_name], '%d.%m.%Y %H:%M:%S').timetuple())
 
 
-def is_weekday(s):
-    return datetime.fromtimestamp(s['b1_timestamp']).weekday() < 5
+def is_weekday(row):
+    """ return boolean value whether day is weekdays from given row and given column name """
+    return datetime.fromtimestamp(row['b1_timestamp']).weekday() < 5
 
 
 def get_daytime(s):
+    """ return hour of day from given row and given column name """
     return datetime.fromtimestamp(s['b1_timestamp']).hour
 
 
 def get_basic_analysis(data, type_name):
+    """ do some basic data analysis from given dataset like max waiting time, min waiting time and mean waiting time"""
     print(type_name, 'max: ', max(data['b1_b5_diff']) / 60)
     print(type_name, 'min: ', min(data['b1_b5_diff']) / 60)
     print(type_name, 'mean: ', statistics.mean(data['b1_b5_diff']) / 60)
@@ -46,6 +64,7 @@ def get_basic_analysis(data, type_name):
 
 
 def plot_waiting_times(df, type_name):
+    """ plot distribution of complete waiting time for given dataframe """
     df_diff = [x / 60 for x in df['b1_b5_diff']]
     plt.rcParams.update({'figure.figsize': (7, 5), 'figure.dpi': 100})
     plt.hist(df_diff, bins=500)
@@ -54,6 +73,7 @@ def plot_waiting_times(df, type_name):
 
 
 def plot_arrivals(df, type_name):
+    """ plot arrival rate of given dataframe by daytime"""
     df_diff = [x for x in df['arrival_time']]
     plt.rcParams.update({'figure.figsize': (7, 5), 'figure.dpi': 100})
     plt.hist(df_diff, bins=24)
@@ -62,6 +82,7 @@ def plot_arrivals(df, type_name):
 
 
 def do_stuff(df, time_name):
+    """ output for basic data analysis stuff """
     # plot_waiting_times(df[df['type'] == 'economy'], 'economy ' + time_name)
     # plot_waiting_times(df[df['type'] == 'business'], 'business ' + time_name)
 
@@ -76,9 +97,10 @@ def do_stuff(df, time_name):
 if __name__ == '__main__':
     data_frame = pd.read_csv('data.csv', sep=';')
 
+    data_frame = cleanup_data(data_frame)
     data_frame = add_timestamps(data_frame)
+    data_frame = add_data_fields(data_frame)
 
-    print(len(data_frame))
     data_frame_weekday = data_frame[data_frame.is_weekday]
     do_stuff(data_frame_weekday, 'weekday')
 
@@ -86,4 +108,3 @@ if __name__ == '__main__':
     do_stuff(data_frame_weekend, 'weekend')
 
     do_stuff(data_frame, 'complete')
-    print(len(data_frame))
