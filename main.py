@@ -29,7 +29,10 @@ def add_timestamps(raw_data):
 def add_data_fields(raw_data):
     """ add extra columns like time for completion for every passenger """
     # boolean value whether day of arrival is weekday or not
-    raw_data['is_weekday'] = raw_data.apply(lambda row: is_weekday(row), axis=1)
+    # raw_data['is_weekday'] = raw_data.apply(lambda row: is_weekday(row), axis=1)
+
+    # add column with weekday number
+    raw_data['weekday'] = raw_data.apply(lambda row: datetime.fromtimestamp(row['b1_timestamp']).weekday(), axis=1)
 
     # hour of arrival
     raw_data['arrival_time'] = raw_data.apply(lambda row: get_daytime(row), axis=1)
@@ -43,11 +46,6 @@ def add_data_fields(raw_data):
 def to_timestamp(row, column_name):
     """ returns timestamp from given row and given column name """
     return time.mktime(datetime.strptime(row[column_name], '%d.%m.%Y %H:%M:%S').timetuple())
-
-
-def is_weekday(row):
-    """ return boolean value whether day is weekdays from given row and given column name """
-    return datetime.fromtimestamp(row['b1_timestamp']).weekday() < 5
 
 
 def get_daytime(s):
@@ -101,10 +99,12 @@ if __name__ == '__main__':
     data_frame = add_timestamps(data_frame)
     data_frame = add_data_fields(data_frame)
 
-    data_frame_weekday = data_frame[data_frame.is_weekday]
+    # all weekdays
+    data_frame_weekday = data_frame[data_frame.weekday < 5]
     do_stuff(data_frame_weekday, 'weekday')
 
-    data_frame_weekend = data_frame[data_frame.is_weekday == False]
+    # for weekends
+    data_frame_weekend = data_frame[data_frame.weekday >= 5]
     do_stuff(data_frame_weekend, 'weekend')
 
     do_stuff(data_frame, 'complete')
