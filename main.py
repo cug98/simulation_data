@@ -71,7 +71,7 @@ def plot_waiting_time_complete(df, type_name):
     df_diff = [x / 60 for x in df['b1_b5_diff']]
     plt.rcParams.update({'figure.figsize': (7, 5), 'figure.dpi': 100})
     plt.hist(df_diff, bins=500)
-    plt.gca().set(title='Verteilung ' + type_name, ylabel='Occurrences')
+    plt.gca().set(title='Verteilung Wartezeit' + type_name, ylabel='Occurrences')
     plt.show()
 
 
@@ -94,6 +94,7 @@ def plot_waiting_times(df, type_name):
         plt.gca().set(title='Wartezeit zwischen ' + 'b' + str(i) + ' und b' + str(i + 1) + ' für ' + type_name,
                       ylabel='waiting time')
         plt.show()
+        print()
 
 
 def analyze_waiting_times(df, type_name):
@@ -121,8 +122,8 @@ def analyze_waiting_times(df, type_name):
 
 def do_stuff(df, time_name):
     """ output for basic data analysis stuff """
-    # plot_waiting_time_complete(df[df['type'] == 'economy'], 'economy ' + time_name)
-    # plot_waiting_time_complete(df[df['type'] == 'business'], 'business ' + time_name)
+    plot_waiting_time_complete(df[df['type'] == 'economy'], 'economy ' + time_name)
+    plot_waiting_time_complete(df[df['type'] == 'business'], 'business ' + time_name)
 
     plot_arrivals(df[df['type'] == 'economy'], 'economy ' + time_name)
     plot_arrivals(df[df['type'] == 'business'], 'business ' + time_name)
@@ -130,6 +131,13 @@ def do_stuff(df, time_name):
     get_basic_analysis(df[df['type'] == 'economy'], 'economy ' + time_name)
     get_basic_analysis(df[df['type'] == 'business'], 'business ' + time_name)
     get_basic_analysis(df, 'all ' + time_name)
+
+
+def do_stuff_single_day(df):
+    weekday = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+    for i in range(0, len(weekday)):
+        data_frame_weekday = data_frame[data_frame.weekday == i]
+        do_stuff(data_frame_weekday, weekday[i])
 
 
 if __name__ == '__main__':
@@ -152,4 +160,6 @@ if __name__ == '__main__':
 
     # do_stuff(data_frame, 'complete')
     # plot_waiting_times(data_frame, 'alle')
-    analyze_waiting_times(data_frame, 'alle')
+    # analyze_waiting_times(data_frame, 'alle')
+
+    do_stuff_single_day(data_frame)
