@@ -60,6 +60,7 @@ def get_daytime(s):
 
 def get_basic_analysis(data, type_name):
     """ do some basic data analysis from given dataset like max waiting time, min waiting time and mean waiting time"""
+    # TODO: print to file
     print(type_name, 'max: ', max(data['b1_b5_diff']) / 60)
     print(type_name, 'min: ', min(data['b1_b5_diff']) / 60)
     print(type_name, 'mean: ', statistics.mean(data['b1_b5_diff']) / 60)
@@ -70,8 +71,9 @@ def plot_waiting_time_complete(df, type_name):
     """ plot distribution of complete waiting time for given dataframe """
     df_diff = [x / 60 for x in df['b1_b5_diff']]
     plt.rcParams.update({'figure.figsize': (7, 5), 'figure.dpi': 100})
-    plt.hist(df_diff, bins=500)
-    plt.gca().set(title='Verteilung Wartezeit' + type_name, ylabel='Occurrences')
+    plt.hist(df_diff, bins=250)
+    plt.gca().set(title='Verteilung Wartezeit ' + type_name, ylabel='Occurrences', xlabel='Wartezeit[min]')
+    plt.savefig('Images/Verteilung Wartezeit ' + type_name + '.png')
     plt.show()
 
 
@@ -80,7 +82,9 @@ def plot_arrivals(df, type_name):
     df_arrivals = [x for x in df['arrival_time']]
     plt.rcParams.update({'figure.figsize': (7, 5), 'figure.dpi': 100})
     plt.hist(df_arrivals, bins=24)
-    plt.gca().set(title='Ankunft ' + type_name, ylabel='Occurrences')
+    plt.gca().set(title='Ankunft ' + type_name, ylabel='Occurrences', xlabel='Uhrzeit[h]')
+    plt.savefig('Images/Ankunft ' + type_name + '.png')
+
     plt.show()
 
 
@@ -90,11 +94,19 @@ def plot_waiting_times(df, type_name):
         df_diff = df['b' + str(i) + '_b' + str(i + 1) + '_diff']
         df_diff = [x / 60 for x in df_diff]
         plt.rcParams.update({'figure.figsize': (7, 5), 'figure.dpi': 100})
-        plt.hist(df_diff, bins=150)
+        plt.hist(df_diff, bins=100)
         plt.gca().set(title='Wartezeit zwischen ' + 'b' + str(i) + ' und b' + str(i + 1) + ' für ' + type_name,
-                      ylabel='waiting time')
+                      ylabel='waiting time', xlabel='Wartezeit[min]')
+        plt.savefig('Images/Wartezeit zwischen ' + 'b' + str(i) + ' und b' + str(i + 1) + ' für ' + type_name + '.png')
         plt.show()
-        print()
+    df_diff = df['b1_b5_diff']
+    df_diff = [x / 60 for x in df_diff]
+    plt.rcParams.update({'figure.figsize': (7, 5), 'figure.dpi': 100})
+    plt.hist(df_diff, bins=100)
+    plt.gca().set(title='Wartezeit zwischen ' + 'b1 und b5 für ' + type_name,
+                  ylabel='waiting time', xlabel='Wartezeit[min]')
+    plt.savefig('Images/Wartezeit zwischen ' + 'b1 und b5 für ' + type_name + '.png')
+    plt.show()
 
 
 def analyze_waiting_times(df, type_name):
@@ -151,15 +163,15 @@ if __name__ == '__main__':
     data_frame = add_data_fields(data_frame)
 
     # all weekdays
-    # data_frame_weekday = data_frame[data_frame.weekday < 5]
-    # do_stuff(data_frame_weekday, 'weekday')
+    data_frame_weekday = data_frame[data_frame.weekday < 5]
+    do_stuff(data_frame_weekday, 'weekday')
 
     # for weekends
-    # data_frame_weekend = data_frame[data_frame.weekday >= 5]
-    # do_stuff(data_frame_weekend, 'weekend')
+    data_frame_weekend = data_frame[data_frame.weekday >= 5]
+    do_stuff(data_frame_weekend, 'weekend')
 
     # do_stuff(data_frame, 'complete')
-    # plot_waiting_times(data_frame, 'alle')
-    # analyze_waiting_times(data_frame, 'alle')
+    plot_waiting_times(data_frame, 'alle')
+    analyze_waiting_times(data_frame, 'alle')
 
     do_stuff_single_day(data_frame)
