@@ -60,11 +60,14 @@ def get_daytime(s):
 
 def get_basic_analysis(data, type_name):
     """ do some basic data analysis from given dataset like max waiting time, min waiting time and mean waiting time"""
-    # TODO: print to file
-    print(type_name, 'max: ', max(data['b1_b5_diff']) / 60)
-    print(type_name, 'min: ', min(data['b1_b5_diff']) / 60)
-    print(type_name, 'mean: ', statistics.mean(data['b1_b5_diff']) / 60)
-    print(type_name, 'standard deviation: ', statistics.stdev(data['b1_b5_diff']) / 60)
+    f = open("data_analysis_dump.txt", "a")
+    f.write('*' * 80 + '\n')
+    f.write('Basic analysis for ' + type_name + ':\n')
+    f.write('max: ' + str(max(data['b1_b5_diff']) / 60) + '\n')
+    f.write('min: ' + str(min(data['b1_b5_diff']) / 60) + '\n')
+    f.write('mean: ' + str(statistics.mean(data['b1_b5_diff']) / 60) + '\n')
+    f.write('standard deviation: ' + str(statistics.stdev(data['b1_b5_diff']) / 60) + '\n\n')
+    f.close()
 
 
 def plot_waiting_time_complete(df, type_name):
@@ -75,6 +78,11 @@ def plot_waiting_time_complete(df, type_name):
     plt.gca().set(title='Verteilung Wartezeit ' + type_name, ylabel='Occurrences', xlabel='Wartezeit[min]')
     plt.savefig('Images/Verteilung Wartezeit ' + type_name + '.png')
     plt.show()
+
+
+def add_distribution_to_plot():
+    # TODO add function to add distribution approximation
+    print('TODO')
 
 
 def plot_arrivals(df, type_name):
@@ -112,7 +120,7 @@ def plot_waiting_times(df, type_name):
 def analyze_waiting_times(df, type_name):
     """ get data analysis for waiting time between checkpoints"""
     f = open("data_analysis_dump.txt", "a")
-    f.write('*' * 20)
+    f.write('*' * 80 + '\n')
     f.write('Wartezeiten fuer ' + type_name + ':\n')
     for i in range(1, 5):
         df_diff = df['b' + str(i) + '_b' + str(i + 1) + '_diff']
