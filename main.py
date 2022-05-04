@@ -4,6 +4,38 @@ import statistics
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from fitter import Fitter, get_distributions
+
+
+def plot_and_save(data_to_plot, title, x_label, y_label, filename, bins, fit_dist=False):
+    plt.rcParams.update({'figure.figsize': (7, 5), 'figure.dpi': 100})
+    plt.hist(data_to_plot, bins=bins)
+
+    if fit_dist:
+        # stuff to fit distribution to data
+        # all available distributions in AnyLogic
+        anylogic_distributions = ['bernoulli', 'beta', 'beta (truncated)', 'binomial', 'binomial (truncated)', 'cauchy',
+                                  'chi2', 'erlang', 'exponential', 'exponential (truncated)', 'gamma',
+                                  'gamma (truncated)', 'geometric', 'gumbel1', 'gumbel2', 'hypergeometric', 'laplace',
+                                  'logarithmic', 'logistic', 'lognormal', 'negativeBinomial',
+                                  'negativeBinomial (truncated)', 'normal', 'normal (truncated)', 'pareto', 'pert',
+                                  'poisson', 'poisson (truncated)', 'randomFalse', 'randomTrue', 'rayleigh',
+                                  'triangular', 'triangular (truncated)', 'triangularAV', 'uniform', 'uniform_discr',
+                                  'uniform_pos', 'weibull', 'weibull (truncated)']
+        # TODO: use only distributions available in AnyLogic
+        fitter = Fitter(data_to_plot, distributions=get_distributions(), timeout=60)
+        fitter.fit()
+        fitter.summary(Nbest=3)
+        # save information about distribution fitting in txt file
+        f = open("fitting_distribution_data.txt", "a")
+        f.write('*' * 80 + '\n')
+        f.write('fitter info for ' + filename + ':\n')
+        f.write(str(fitter.get_best()) + '\n\n')
+        f.close()
+
+    plt.gca().set(title=title, ylabel=y_label, xlabel=x_label)
+    plt.savefig('Images/' + filename)
+    plt.show()
 
 
 def cleanup_data(raw_data):
@@ -73,27 +105,15 @@ def get_basic_analysis(data, type_name):
 def plot_waiting_time_complete(df, type_name):
     """ plot distribution of complete waiting time for given dataframe """
     df_diff = [x / 60 for x in df['b1_b5_diff']]
-    plt.rcParams.update({'figure.figsize': (7, 5), 'figure.dpi': 100})
-    plt.hist(df_diff, bins=250)
-    plt.gca().set(title='Verteilung Wartezeit ' + type_name, ylabel='Occurrences', xlabel='Wartezeit[min]')
-    plt.savefig('Images/Verteilung Wartezeit ' + type_name + '.png')
-    plt.show()
-
-
-def add_distribution_to_plot():
-    # TODO add function to add distribution approximation
-    print('TODO')
+    plot_and_save(df_diff, title='Verteilung Wartezeit ' + type_name, y_label='Occurrences', x_label='Wartezeit[min]',
+                  filename='Verteilung Wartezeit ' + type_name + '.png', bins=250)
 
 
 def plot_arrivals(df, type_name):
     """ plot arrival rate of given dataframe by daytime"""
     df_arrivals = [x for x in df['arrival_time']]
-    plt.rcParams.update({'figure.figsize': (7, 5), 'figure.dpi': 100})
-    plt.hist(df_arrivals, bins=24)
-    plt.gca().set(title='Ankunft ' + type_name, ylabel='Occurrences', xlabel='Uhrzeit[h]')
-    plt.savefig('Images/Ankunft ' + type_name + '.png')
-
-    plt.show()
+    plot_and_save(df_arrivals, title='Ankunft ' + type_name, y_label='Occurrences', x_label='Uhrzeit[h]',
+                  filename='Ankunft ' + type_name + '.png', bins=24)
 
 
 def plot_waiting_times(df, type_name):
@@ -101,20 +121,15 @@ def plot_waiting_times(df, type_name):
     for i in range(1, 5):
         df_diff = df['b' + str(i) + '_b' + str(i + 1) + '_diff']
         df_diff = [x / 60 for x in df_diff]
-        plt.rcParams.update({'figure.figsize': (7, 5), 'figure.dpi': 100})
-        plt.hist(df_diff, bins=100)
-        plt.gca().set(title='Wartezeit zwischen ' + 'b' + str(i) + ' und b' + str(i + 1) + ' für ' + type_name,
-                      ylabel='waiting time', xlabel='Wartezeit[min]')
-        plt.savefig('Images/Wartezeit zwischen ' + 'b' + str(i) + ' und b' + str(i + 1) + ' für ' + type_name + '.png')
-        plt.show()
+        plot_and_save(df_diff, title='Wartezeit zwischen ' + 'b' + str(i) + ' und b' + str(i + 1) + ' für ' + type_name,
+                      y_label='Wartezeit', x_label='Wartezeit[min]',
+                      filename='Wartezeit zwischen ' + 'b' + str(i) + ' und b' + str(
+                          i + 1) + ' für ' + type_name + '.png', bins=100, fit_dist=True)
     df_diff = df['b1_b5_diff']
     df_diff = [x / 60 for x in df_diff]
-    plt.rcParams.update({'figure.figsize': (7, 5), 'figure.dpi': 100})
-    plt.hist(df_diff, bins=100)
-    plt.gca().set(title='Wartezeit zwischen ' + 'b1 und b5 für ' + type_name,
-                  ylabel='waiting time', xlabel='Wartezeit[min]')
-    plt.savefig('Images/Wartezeit zwischen ' + 'b1 und b5 für ' + type_name + '.png')
-    plt.show()
+    plot_and_save(df_diff, title='Wartezeit zwischen b1 und b5' + ' für ' + type_name,
+                  y_label='Wartezeit', x_label='Wartezeit[min]',
+                  filename='Wartezeit zwischen b1 und b5 für ' + type_name + '.png', bins=100, fit_dist=True)
 
 
 def analyze_waiting_times(df, type_name):
@@ -156,13 +171,14 @@ def do_stuff(df, time_name):
 def do_stuff_single_day(df):
     weekday = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
     for i in range(0, len(weekday)):
-        data_frame_weekday = data_frame[data_frame.weekday == i]
-        do_stuff(data_frame_weekday, weekday[i])
+        data_frame_single_day = df[df.weekday == i]
+        do_stuff(data_frame_single_day, weekday[i])
 
 
 if __name__ == '__main__':
-    # clear data dump .txt file
+    # clear output txt files
     open("data_analysis_dump.txt", "w").close()
+    open("fitting_distribution_data.txt", "w").close()
 
     data_frame = pd.read_csv('data.csv', sep=';')
 
@@ -171,15 +187,15 @@ if __name__ == '__main__':
     data_frame = add_data_fields(data_frame)
 
     # all weekdays
-    data_frame_weekday = data_frame[data_frame.weekday < 5]
-    do_stuff(data_frame_weekday, 'weekday')
+    # data_frame_weekday = data_frame[data_frame.weekday < 5]
+    # do_stuff(data_frame_weekday, 'weekday')
 
     # for weekends
-    data_frame_weekend = data_frame[data_frame.weekday >= 5]
-    do_stuff(data_frame_weekend, 'weekend')
+    # data_frame_weekend = data_frame[data_frame.weekday >= 5]
+    # do_stuff(data_frame_weekend, 'weekend')
 
     # do_stuff(data_frame, 'complete')
     plot_waiting_times(data_frame, 'alle')
     analyze_waiting_times(data_frame, 'alle')
 
-    do_stuff_single_day(data_frame)
+    # do_stuff_single_day(data_frame)
