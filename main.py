@@ -4,12 +4,14 @@ import statistics
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from fitter import Fitter, get_distributions
+from fitter import Fitter
+from pathlib import Path
 
 
 def plot_and_save(data_to_plot, title, x_label, y_label, filename, bins, fit_dist=False):
     plt.rcParams.update({'figure.figsize': (7, 5), 'figure.dpi': 100})
     plt.hist(data_to_plot, bins=bins)
+    folder = 'Distribution_plots/' if fit_dist else 'Images/'
 
     if fit_dist:
         # stuff to fit distribution to data
@@ -24,8 +26,7 @@ def plot_and_save(data_to_plot, title, x_label, y_label, filename, bins, fit_dis
                                   'uniform_pos', 'weibull', 'weibull (truncated)']
         dist_in_both = ["beta", "cauchy", "chi2", "erlang", "expon", "truncexpon", "gamma", "gumbel_l", "gumbel_r",
                         "laplace", "loggamma", "loglaplace", "loguniform", "logistic", "lognorm", "norm", "truncnorm",
-                        "pareto", "rayleigh", "triang", "uniform", "weibull_min", "weibull_max"
-                        ]
+                        "pareto", "rayleigh", "triang", "uniform", "weibull_min", "weibull_max"]
         fitter = Fitter(data_to_plot, distributions=dist_in_both, timeout=60)
         fitter.fit()
         fitter.summary(Nbest=3)
@@ -37,7 +38,7 @@ def plot_and_save(data_to_plot, title, x_label, y_label, filename, bins, fit_dis
         f.close()
 
     plt.gca().set(title=title, ylabel=y_label, xlabel=x_label)
-    plt.savefig('Images/' + filename)
+    plt.savefig(folder + filename)
     plt.show()
 
 
@@ -182,6 +183,9 @@ if __name__ == '__main__':
     # clear output txt files
     open("data_analysis_dump.txt", "w").close()
     open("fitting_distribution_data.txt", "w").close()
+
+    Path("Images/").mkdir(parents=True, exist_ok=True)
+    Path("Distribution_plots/").mkdir(parents=True, exist_ok=True)
 
     data_frame = pd.read_csv('data.csv', sep=';')
 
