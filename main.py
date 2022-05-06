@@ -22,8 +22,12 @@ def plot_and_save(data_to_plot, title, x_label, y_label, filename, bins, fit_dis
                                   'poisson', 'poisson (truncated)', 'randomFalse', 'randomTrue', 'rayleigh',
                                   'triangular', 'triangular (truncated)', 'triangularAV', 'uniform', 'uniform_discr',
                                   'uniform_pos', 'weibull', 'weibull (truncated)']
+        dist_in_both = ["beta", "cauchy", "chi2", "erlang", "expon", "truncexpon", "gamma", "gumbel_l", "gumbel_r",
+                        "laplace", "loggamma", "loglaplace", "loguniform", "logistic", "lognorm", "norm", "truncnorm",
+                        "pareto", "rayleigh", "triang", "uniform", "weibull_min", "weibull_max"
+                        ]
         # TODO: use only distributions available in AnyLogic
-        fitter = Fitter(data_to_plot, distributions=get_distributions(), timeout=60)
+        fitter = Fitter(data_to_plot, distributions=dist_in_both, timeout=60)
         fitter.fit()
         fitter.summary(Nbest=3)
         # save information about distribution fitting in txt file
