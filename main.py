@@ -26,7 +26,6 @@ def plot_and_save(data_to_plot, title, x_label, y_label, filename, bins, fit_dis
                         "laplace", "loggamma", "loglaplace", "loguniform", "logistic", "lognorm", "norm", "truncnorm",
                         "pareto", "rayleigh", "triang", "uniform", "weibull_min", "weibull_max"
                         ]
-        # TODO: use only distributions available in AnyLogic
         fitter = Fitter(data_to_plot, distributions=dist_in_both, timeout=60)
         fitter.fit()
         fitter.summary(Nbest=3)
