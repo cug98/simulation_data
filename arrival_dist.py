@@ -5,9 +5,11 @@ import numpy as np
 import pandas as pd
 from fitter import Fitter
 from pathlib import Path
+# import seaborn as sns
+import statsmodels.graphics.gofplots as sm
 
 day_length = 60 * 60 * 24
-resolution = 60 * 15  # resolution of arrival rates in seconds
+resolution = 60 * 30  # resolution of arrival rates in seconds
 day_start_time = 60 * 60 * 6  # timestamp of start of daytime in seconds, e.g. 0 for whole day, daytime>=day_start_time
 day_end_time = 60 * 60 * 20  # timestamp of end of daytime in seconds, e.g. 60*60*24 for whole day, daytime<day_end_time
 get_single_days = True
@@ -28,6 +30,9 @@ def plot_and_save(data_to_plot, title, x_label, y_label, filename, bins, fit_dis
                         "laplace", "loggamma", "loglaplace", "loguniform", "logistic", "lognorm", "norm", "truncnorm",
                         "pareto", "rayleigh", "triang", "uniform", "weibull_min", "weibull_max"]
         # fitter = Fitter(data_to_plot, distributions=dist_in_both, timeout=60, bins=bins)
+        sm.ProbPlot(np.array(test_data)).qqplot(line='q', xlabel='theoretical quantiles', ylabel='empirical quantiles')
+        sm.ProbPlot(np.array(test_data)).ppplot(line='s', xlabel='theoretical distribution',
+                                                ylabel='empirical distribution')
         fitter = Fitter(test_data, distributions=dist_in_both, timeout=60, bins=bins)
         fitter.fit()
         fitter.summary(Nbest=3)

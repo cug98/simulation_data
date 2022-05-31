@@ -188,19 +188,19 @@ if __name__ == '__main__':
     Path("Images/").mkdir(parents=True, exist_ok=True)
     Path("Distribution_plots/").mkdir(parents=True, exist_ok=True)
 
-    data_frame = pd.read_csv('data.csv', sep=';')
+    data_frame = pd.read_csv('sim_data.csv', sep=';')
 
     data_frame = cleanup_data(data_frame)
     data_frame = add_timestamps(data_frame)
     data_frame = add_data_fields(data_frame)
 
     # all weekdays
-    data_frame_weekday = data_frame[data_frame.weekday < 5]
-    do_stuff(data_frame_weekday, 'weekday', get_dist)
+    # data_frame_weekday = data_frame[data_frame.weekday < 5]
+    # do_stuff(data_frame_weekday, 'weekday', get_dist)
 
     # for weekends
-    data_frame_weekend = data_frame[data_frame.weekday >= 5]
-    do_stuff(data_frame_weekend, 'weekend', get_dist)
+    # data_frame_weekend = data_frame[data_frame.weekday >= 5]
+    # do_stuff(data_frame_weekend, 'weekend', get_dist)
 
     # do_stuff(data_frame, 'complete')
     plot_waiting_times(data_frame, 'alle', get_dist)
