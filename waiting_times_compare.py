@@ -98,7 +98,7 @@ def plot_waiting_times(dfs, type_name):
 
         plot_and_save(df_diffs,
                       title='Wartezeit zwischen ' + 'b' + str(i) + ' und b' + str(i + 1) + ' für ' + type_name,
-                      y_label='Wartezeit', x_label='Wartezeit[min]',
+                      y_label='Anzahl', x_label='Wartezeit[min]',
                       filename='Wartezeit zwischen ' + 'b' + str(i) + ' und b' + str(
                           i + 1) + ' für ' + type_name + '.png', bins=100)
     df_diffs = {}
@@ -107,7 +107,7 @@ def plot_waiting_times(dfs, type_name):
         df_diffs[key_element] = [x / 60 for x in df_diffs[key_element]]
 
     plot_and_save(df_diffs, title='Wartezeit zwischen b1 und b5' + ' für ' + type_name,
-                  y_label='Wartezeit', x_label='Wartezeit[min]',
+                  y_label='Anzahl', x_label='Wartezeit[min]',
                   filename='Wartezeit zwischen b1 und b5 für ' + type_name + '.png', bins=100)
 
 
