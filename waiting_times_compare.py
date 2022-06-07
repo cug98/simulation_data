@@ -4,20 +4,18 @@ import statistics
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from fitter import Fitter
 from pathlib import Path
 
 
-def plot_and_save(data_to_plot, data_to_plot_sim, title, x_label, y_label, filename, bins):
-    fig, axs = plt.subplots(2, 1, sharex='all', sharey='all')
+def plot_and_save(datas_to_plot, title, x_label, y_label, filename, bins):
+    fig, axs = plt.subplots(len(list(datas_to_plot)), 1, sharex='all', sharey='all')
     plt.suptitle(title)
+    for i, key_element in enumerate(datas_to_plot):
+        axs[i].set(title=key_element, xlabel=x_label, ylabel=y_label)
+        # list.append()
+        axs[i].hist(datas_to_plot[key_element], bins)
 
-    axs[0].set(title='historische Daten', xlabel=x_label, ylabel=y_label)
-    axs[1].set(title='simulierte Daten', xlabel=x_label, ylabel=y_label)
-
-    bins_np = np.histogram(np.hstack((data_to_plot, data_to_plot_sim)), bins=bins)[1]
-    axs[0].hist(data_to_plot, bins_np)
-    axs[1].hist(data_to_plot_sim, bins_np)
+    # bins_np = np.histogram(np.hstack((data_to_plot, data_to_plot_sim)), bins=bins)[1]
     fig.tight_layout()
 
     plt.rcParams.update({'figure.figsize': (7, 5), 'figure.dpi': 100})
@@ -70,7 +68,7 @@ def add_data_fields(raw_data):
 
 def to_timestamp(row, column_name):
     """ returns timestamp from given row and given column name """
-    return time.mktime(datetime.strptime(row[column_name], '%d.%m.%Y %H:%M:%S').timetuple())
+    return time.mktime(datetime.strptime(row[column_name], '%d/%m/%Y %H:%M:%S').timetuple())
 
 
 def get_daytime(s):
@@ -90,26 +88,25 @@ def get_basic_analysis(data, type_name):
     f.close()
 
 
-def plot_waiting_times(df, df_sim, type_name):
+def plot_waiting_times(dfs, type_name):
     """ plot distribution of waiting times between checkpoints"""
     for i in range(1, 5):
-        df_diff = df['b' + str(i) + '_b' + str(i + 1) + '_diff']
-        df_diff = [x / 60 for x in df_diff]
+        df_diffs = {}
+        for key_element in dfs:
+            df_diffs[key_element] = dfs[key_element]['b' + str(i) + '_b' + str(i + 1) + '_diff']
+            df_diffs[key_element] = [x / 60 for x in df_diffs[key_element]]
 
-        df_diff_sim = df_sim['b' + str(i) + '_b' + str(i + 1) + '_diff']
-        df_diff_sim = [x / 60 for x in df_diff_sim]
-        plot_and_save(df_diff, df_diff_sim,
+        plot_and_save(df_diffs,
                       title='Wartezeit zwischen ' + 'b' + str(i) + ' und b' + str(i + 1) + ' für ' + type_name,
                       y_label='Wartezeit', x_label='Wartezeit[min]',
                       filename='Wartezeit zwischen ' + 'b' + str(i) + ' und b' + str(
                           i + 1) + ' für ' + type_name + '.png', bins=100)
-    df_diff = df['b1_b5_diff']
-    df_diff = [x / 60 for x in df_diff]
+    df_diffs = {}
+    for key_element in dfs:
+        df_diffs[key_element] = dfs[key_element]['b1_b5_diff']
+        df_diffs[key_element] = [x / 60 for x in df_diffs[key_element]]
 
-    df_diff_sim = df_sim['b1_b5_diff']
-    df_diff_sim = [x / 60 for x in df_diff_sim]
-
-    plot_and_save(df_diff, df_diff_sim, title='Wartezeit zwischen b1 und b5' + ' für ' + type_name,
+    plot_and_save(df_diffs, title='Wartezeit zwischen b1 und b5' + ' für ' + type_name,
                   y_label='Wartezeit', x_label='Wartezeit[min]',
                   filename='Wartezeit zwischen b1 und b5 für ' + type_name + '.png', bins=100)
 
@@ -156,20 +153,22 @@ if __name__ == '__main__':
     open("waiting_times.txt", "w").close()
 
     Path("WaitingTimes/").mkdir(parents=True, exist_ok=True)
-
+    all_df = {}
     data_frame = pd.read_csv('data.csv', sep=';')
+    all_df["alle historisch"] = data_frame
+
     data_frame_sim = pd.read_csv('sim_data.csv', sep=';')
+    all_df["alle simuliert"] = data_frame_sim
 
-    data_frame = cleanup_data(data_frame)
-    data_frame = add_timestamps(data_frame)
-    data_frame = add_data_fields(data_frame)
+    data_frame_sim_1WTMD = pd.read_csv('sim_data_1WTMD.csv', sep=';')
+    all_df["alle simuliert mit 1 business-WTMD"] = data_frame_sim_1WTMD
 
-    data_frame_sim = cleanup_data(data_frame_sim)
-    data_frame_sim = add_timestamps(data_frame_sim)
-    data_frame_sim = add_data_fields(data_frame_sim)
+    for key in all_df:
+        all_df[key] = cleanup_data(all_df[key])
+        all_df[key] = add_timestamps(all_df[key])
+        all_df[key] = add_data_fields(all_df[key])
 
-    plot_waiting_times(data_frame, data_frame_sim, 'alle')
-    analyze_waiting_times(data_frame, 'alle historisch')
-    analyze_waiting_times(data_frame_sim, 'alle simuliert')
-    print('SLA hist: ', str(len(data_frame[data_frame.b1_b5_diff <= (60 * 30)]) / len(data_frame)))
-    print('SLA sim: ', str(len(data_frame_sim[data_frame_sim.b1_b5_diff <= (60 * 30)]) / len(data_frame_sim)))
+    plot_waiting_times(all_df, 'alle')
+    for key in all_df:
+        analyze_waiting_times(all_df[key], key)
+        print('SLA ' + key + ':', str(len(all_df[key][all_df[key].b1_b5_diff <= (60 * 30)]) / len(all_df[key])))

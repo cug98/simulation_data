@@ -86,7 +86,7 @@ def add_data_fields(raw_data):
 
 def to_timestamp(row, column_name):
     """ returns timestamp from given row and given column name """
-    return time.mktime(datetime.strptime(row[column_name], '%d.%m.%Y %H:%M:%S').timetuple())
+    return time.mktime(datetime.strptime(row[column_name], '%d/%m/%Y %H:%M:%S').timetuple())
 
 
 def get_daytime(s):
