@@ -6,6 +6,12 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 
+data_files = {
+    "alle historisch": 'data.csv',
+    "simuliert": 'sim_data.csv',
+    "simuliert mit 1 business-WTMD": 'sim_data_1WTMD.csv',
+}
+
 
 def plot_and_save(datas_to_plot, title, x_label, y_label, filename, bins):
     fig, axs = plt.subplots(len(list(datas_to_plot)), 1, sharex='all', sharey='all')
@@ -154,14 +160,8 @@ if __name__ == '__main__':
 
     Path("WaitingTimes/").mkdir(parents=True, exist_ok=True)
     all_df = {}
-    data_frame = pd.read_csv('data.csv', sep=';')
-    all_df["alle historisch"] = data_frame
-
-    data_frame_sim = pd.read_csv('sim_data.csv', sep=';')
-    all_df["alle simuliert"] = data_frame_sim
-
-    data_frame_sim_1WTMD = pd.read_csv('sim_data_1WTMD.csv', sep=';')
-    all_df["alle simuliert mit 1 business-WTMD"] = data_frame_sim_1WTMD
+    for key in data_files:
+        all_df[key] = pd.read_csv(data_files[key], sep=';')
 
     for key in all_df:
         all_df[key] = cleanup_data(all_df[key])
