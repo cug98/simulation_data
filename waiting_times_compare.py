@@ -171,4 +171,4 @@ if __name__ == '__main__':
     plot_waiting_times(all_df, 'alle')
     for key in all_df:
         analyze_waiting_times(all_df[key], key)
-        print('SLA ' + key + ':', str(len(all_df[key][all_df[key].b1_b5_diff <= (60 * 30)]) / len(all_df[key])))
+        print('SLA ' + key + ':', str(len(all_df[key][all_df[key].b1_b5_diff <= (60 * 30)]) / len(all_df[key]))[0: 8])
