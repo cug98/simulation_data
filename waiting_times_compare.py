@@ -6,14 +6,29 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 
+# data_files = {
+#     "alle historisch": 'data.csv',
+#     "simuliert": 'sim_data.csv',
+#     "simuliert mit 1 business-WTMD": 'sim_data_1WTMD.csv',
+#     "simuliert mit 2 business-WTMD": 'sim_data_2WTMD.csv',
+#     "simuliert mit Systemausfall": 'sim_data_sys_failure.csv',
+#     "simuliert mit 1 business-WTMD und Systemausfall": 'sim_data_1WTMD_sys_failure.csv',
+#     "simuliert mit 2 business-WTMD und Systemausfall": 'sim_data_2WTMD_sys_failure.csv',
+# }
+
+time_SLA = 60 * 35
+
 data_files = {
-    "alle historisch": 'data.csv',
-    "simuliert": 'sim_data.csv',
-    "simuliert mit 1 business-WTMD": 'sim_data_1WTMD.csv',
-    # "simuliert mit 2 business-WTMD": 'sim_data_2WTMD.csv',
-    # "simuliert mit 2 business-WTMD und 5 Grenzkontrolleuren": 'sim_data_2WTMD_5border.csv',
-    "simuliert mit 5 Grenzkontrolleuren": 'sim_data_5border.csv',
-    "simuliert Arwin": 'sim_data_arwin.csv',
+    "simuliert Passagieranstieg": 'sim_data_pass_inc.csv',
+    # "simuliert Passagieranstieg mit 2 business-WTMD": 'sim_data_2WTMD_pass_inc.csv',
+    # "simuliert Passagieranstieg mit 3 Border Control": 'sim_data_pass_inc_3BC.csv',
+    # "simuliert Passagieranstieg mit 2 business-WTMD und 3 Border Control": 'sim_data_2WTMD_pass_inc_3BC.csv',
+    # "simuliert mit Systemausfall mit Passagieranstieg mit 2 business-WTMD": 'sim_data_2WTMD_sys_failure_pass_inc.csv',
+    # "simuliert mit Systemausfall mit Passagieranstieg mit 3 Border Control": 'sim_data_sys_failure_pass_inc_3BC.csv',
+    "simuliert mit Systemausfall mit Passagieranstieg mit 2 business-WTMD und 3 Border Control": 'sim_data_2WTMD_sys_failure_pass_inc_3BC.csv',
+    "simuliert mit Systemausfall mit Passagieranstieg mit 2 business-WTMD und 4 Border Control": 'sim_data_2WTMD_sys_failure_pass_inc_4BC.csv',
+    "simuliert mit Systemausfall mit Passagieranstieg mit 3 business-WTMD und 5 Border Control": 'sim_data_3WTMD_sys_failure_pass_inc_5BC.csv',
+    "simuliert mit Systemausfall mit Passagieranstieg mit 3 business-WTMD und immer 5 Border Control": 'sim_data_pass_inc_always5BC.csv',
 }
 
 time_step_size = 60 * 60
@@ -39,10 +54,11 @@ def plot_and_save_waiting_times(datas_to_plot, title, x_label, y_label, filename
 
     folder = 'WaitingTimes/'
     plt.savefig(folder + filename)
-    plt.show()
+    # plt.show()
 
 
 def plot_and_save_passengers_in_system(datas_to_plot, x_label, y_label, title, filename):
+    plt.rcParams.update({'figure.figsize': (7, 9), 'figure.dpi': 1000})
     fig, axs = plt.subplots(len(list(datas_to_plot)), 1, sharex='all', sharey='all')
     plt.suptitle(title)
     for i, key_element in enumerate(datas_to_plot):
@@ -51,13 +67,13 @@ def plot_and_save_passengers_in_system(datas_to_plot, x_label, y_label, title, f
 
     fig.tight_layout()
 
-    plt.rcParams.update({'figure.figsize': (7, 9), 'figure.dpi': 1000})
     folder = 'CountPassengers/'
     plt.savefig(folder + filename)
-    plt.show()
+    # plt.show()
 
 
 def plot_and_save_sla(datas_to_plot, x_label, y_label, title, filename):
+    plt.rcParams.update({'figure.figsize': (7, 9), 'figure.dpi': 1000})
     fig, axs = plt.subplots(len(list(datas_to_plot)), 1, sharex='all', sharey='all')
     plt.suptitle(title)
     for i, key_element in enumerate(datas_to_plot):
@@ -67,10 +83,9 @@ def plot_and_save_sla(datas_to_plot, x_label, y_label, title, filename):
 
     fig.tight_layout()
 
-    plt.rcParams.update({'figure.figsize': (7, 9), 'figure.dpi': 1000})
     folder = 'SLA/'
     plt.savefig(folder + filename)
-    plt.show()
+    # plt.show()
 
 
 def cleanup_data(raw_data):
@@ -78,6 +93,7 @@ def cleanup_data(raw_data):
     # remove blanks
     raw_data.replace("", np.nan, inplace=True)
     raw_data.dropna(subset=['b5'], inplace=True)
+    # raw_data = raw_data[raw_data.type == 'business']
     return raw_data
 
 
@@ -172,8 +188,7 @@ def plot_passengers_in_system(dfs, type_name, number_of_weeks):
                                                                  dfs[key_elements].b5_timestamp % (
                                                                  60 * 60 * 24 * 7) > i)]) // number_of_weeks)
 
-
-    plot_and_save_passengers_in_system(numbers_by_time, y_label='Anzahl', x_label='Zeit[min]',
+    plot_and_save_passengers_in_system(numbers_by_time, y_label='Anzahl', x_label='Zeit[h]',
                                        title="Anzahl Passagiere in System für " + type_name,
                                        filename=type_name + '.png')
 
@@ -196,7 +211,7 @@ def plot_SLA(dfs, type_name):
                             dfs[key_elements].b5_timestamp % (60 * 60 * 24 * 7) <= i + time_step_size_SLA)]))
             except ZeroDivisionError:
                 numbers_by_time[key_elements].append(0)
-    plot_and_save_sla(numbers_by_time, y_label='Anzahl', x_label='Zeit[min]',
+    plot_and_save_sla(numbers_by_time, y_label='Anzahl', x_label='Zeit[h]',
                       title="SLA für " + type_name,
                       filename=type_name + '.png')
 
@@ -250,6 +265,7 @@ if __name__ == '__main__':
         all_df[key] = pd.read_csv(data_files[key], sep=';')
 
     for key in all_df:
+        print(key)
         all_df[key] = cleanup_data(all_df[key])
         all_df[key] = add_timestamps(all_df[key])
         all_df[key] = add_data_fields(all_df[key])
@@ -259,4 +275,4 @@ if __name__ == '__main__':
     plot_SLA(all_df, 'alle')
     for key in all_df:
         analyze_waiting_times(all_df[key], key)
-        print('SLA ' + key + ':', str(len(all_df[key][all_df[key].b1_b5_diff <= (60 * 30)]) / len(all_df[key]))[0: 8])
+        print('SLA ' + key + ':', str(len(all_df[key][all_df[key].b1_b5_diff <= time_SLA]) / len(all_df[key]))[0: 8])
