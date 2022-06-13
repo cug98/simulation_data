@@ -10,10 +10,13 @@ data_files = {
     "alle historisch": 'data.csv',
     "simuliert": 'sim_data.csv',
     "simuliert mit 1 business-WTMD": 'sim_data_1WTMD.csv',
-    "simuliert mit 2 business-WTMD": 'sim_data_2WTMD.csv',
+    # "simuliert mit 2 business-WTMD": 'sim_data_2WTMD.csv',
+    # "simuliert mit 2 business-WTMD und 5 Grenzkontrolleuren": 'sim_data_2WTMD_5border.csv',
+    "simuliert mit 5 Grenzkontrolleuren": 'sim_data_5border.csv',
+    "simuliert Arwin": 'sim_data_arwin.csv',
 }
 
-time_step_size = 60
+time_step_size = 60 * 60
 time_step_size_SLA = 60 * 60
 SLA_time = 30 * 60
 
@@ -22,12 +25,16 @@ def plot_and_save_waiting_times(datas_to_plot, title, x_label, y_label, filename
     plt.rcParams.update({'figure.figsize': (7, 9), 'figure.dpi': 100})
     fig, axs = plt.subplots(len(list(datas_to_plot)), 1, sharex='all', sharey='all')
     plt.suptitle(title)
+
+    list_for_bins = []
+    for key_element in datas_to_plot:
+        list_for_bins = np.hstack((datas_to_plot[key_element], list_for_bins))
+    bins_np = np.histogram(list_for_bins, bins=bins)[1]
+
     for i, key_element in enumerate(datas_to_plot):
         axs[i].set(title=key_element, xlabel=x_label, ylabel=y_label)
-        # list.append()
-        axs[i].hist(datas_to_plot[key_element], bins)
+        axs[i].hist(datas_to_plot[key_element], bins_np)
 
-    # bins_np = np.histogram(np.hstack((data_to_plot, data_to_plot_sim)), bins=bins)[1]
     fig.tight_layout()
 
     folder = 'WaitingTimes/'
@@ -165,9 +172,7 @@ def plot_passengers_in_system(dfs, type_name, number_of_weeks):
                                                                  dfs[key_elements].b5_timestamp % (
                                                                  60 * 60 * 24 * 7) > i)]) // number_of_weeks)
 
-    print(len(range(0, 60 * 60 * 24 * 7, time_step_size)))
-    for key_elements in numbers_by_time:
-        print(len(numbers_by_time[key_elements]))
+
     plot_and_save_passengers_in_system(numbers_by_time, y_label='Anzahl', x_label='Zeit[min]',
                                        title="Anzahl Passagiere in System für " + type_name,
                                        filename=type_name + '.png')
@@ -189,7 +194,6 @@ def plot_SLA(dfs, type_name):
                                                                      dfs[key_elements].b1_b5_diff <= SLA_time)]) / len(
                     dfs[key_elements][(dfs[key_elements].b5_timestamp % (60 * 60 * 24 * 7) > i) & (
                             dfs[key_elements].b5_timestamp % (60 * 60 * 24 * 7) <= i + time_step_size_SLA)]))
-                print("worked")
             except ZeroDivisionError:
                 numbers_by_time[key_elements].append(0)
     plot_and_save_sla(numbers_by_time, y_label='Anzahl', x_label='Zeit[min]',
@@ -251,7 +255,7 @@ if __name__ == '__main__':
         all_df[key] = add_data_fields(all_df[key])
 
     plot_waiting_times(all_df, 'alle')
-    # plot_passengers_in_system(all_df, 'alle', 3)
+    plot_passengers_in_system(all_df, 'alle', 3)
     plot_SLA(all_df, 'alle')
     for key in all_df:
         analyze_waiting_times(all_df[key], key)
