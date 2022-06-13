@@ -10,10 +10,16 @@ data_files = {
     "alle historisch": 'data.csv',
     "simuliert": 'sim_data.csv',
     "simuliert mit 1 business-WTMD": 'sim_data_1WTMD.csv',
+    "simuliert mit 2 business-WTMD": 'sim_data_2WTMD.csv',
 }
 
+time_step_size = 60
+time_step_size_SLA = 60 * 60
+SLA_time = 30 * 60
 
-def plot_and_save(datas_to_plot, title, x_label, y_label, filename, bins):
+
+def plot_and_save_waiting_times(datas_to_plot, title, x_label, y_label, filename, bins):
+    plt.rcParams.update({'figure.figsize': (7, 9), 'figure.dpi': 100})
     fig, axs = plt.subplots(len(list(datas_to_plot)), 1, sharex='all', sharey='all')
     plt.suptitle(title)
     for i, key_element in enumerate(datas_to_plot):
@@ -24,8 +30,38 @@ def plot_and_save(datas_to_plot, title, x_label, y_label, filename, bins):
     # bins_np = np.histogram(np.hstack((data_to_plot, data_to_plot_sim)), bins=bins)[1]
     fig.tight_layout()
 
-    plt.rcParams.update({'figure.figsize': (7, 5), 'figure.dpi': 100})
     folder = 'WaitingTimes/'
+    plt.savefig(folder + filename)
+    plt.show()
+
+
+def plot_and_save_passengers_in_system(datas_to_plot, x_label, y_label, title, filename):
+    fig, axs = plt.subplots(len(list(datas_to_plot)), 1, sharex='all', sharey='all')
+    plt.suptitle(title)
+    for i, key_element in enumerate(datas_to_plot):
+        axs[i].set(title=key_element, xlabel=x_label, ylabel=y_label)
+        axs[i].bar(range(0, 60 * 60 * 24 * 7, time_step_size), datas_to_plot[key_element], width=time_step_size)
+
+    fig.tight_layout()
+
+    plt.rcParams.update({'figure.figsize': (7, 9), 'figure.dpi': 1000})
+    folder = 'CountPassengers/'
+    plt.savefig(folder + filename)
+    plt.show()
+
+
+def plot_and_save_sla(datas_to_plot, x_label, y_label, title, filename):
+    fig, axs = plt.subplots(len(list(datas_to_plot)), 1, sharex='all', sharey='all')
+    plt.suptitle(title)
+    for i, key_element in enumerate(datas_to_plot):
+        axs[i].set(title=key_element, xlabel=x_label, ylabel=y_label)
+        axs[i].plot(range(0, 60 * 60 * 24 * 7, time_step_size_SLA), datas_to_plot[key_element])
+        axs[i].hlines(y=0.9, xmin=0, xmax=60 * 60 * 24 * 7, linewidth=2, color='r', label='SLA')
+
+    fig.tight_layout()
+
+    plt.rcParams.update({'figure.figsize': (7, 9), 'figure.dpi': 1000})
+    folder = 'SLA/'
     plt.savefig(folder + filename)
     plt.show()
 
@@ -102,19 +138,63 @@ def plot_waiting_times(dfs, type_name):
             df_diffs[key_element] = dfs[key_element]['b' + str(i) + '_b' + str(i + 1) + '_diff']
             df_diffs[key_element] = [x / 60 for x in df_diffs[key_element]]
 
-        plot_and_save(df_diffs,
-                      title='Wartezeit zwischen ' + 'b' + str(i) + ' und b' + str(i + 1) + ' für ' + type_name,
-                      y_label='Anzahl', x_label='Wartezeit[min]',
-                      filename='Wartezeit zwischen ' + 'b' + str(i) + ' und b' + str(
-                          i + 1) + ' für ' + type_name + '.png', bins=100)
+        plot_and_save_waiting_times(df_diffs,
+                                    title='Wartezeit zwischen ' + 'b' + str(i) + ' und b' + str(
+                                        i + 1) + ' für ' + type_name,
+                                    y_label='Anzahl', x_label='Wartezeit[min]',
+                                    filename='Wartezeit zwischen ' + 'b' + str(i) + ' und b' + str(
+                                        i + 1) + ' für ' + type_name + '.png', bins=100)
     df_diffs = {}
     for key_element in dfs:
         df_diffs[key_element] = dfs[key_element]['b1_b5_diff']
         df_diffs[key_element] = [x / 60 for x in df_diffs[key_element]]
 
-    plot_and_save(df_diffs, title='Wartezeit zwischen b1 und b5' + ' für ' + type_name,
-                  y_label='Anzahl', x_label='Wartezeit[min]',
-                  filename='Wartezeit zwischen b1 und b5 für ' + type_name + '.png', bins=100)
+    plot_and_save_waiting_times(df_diffs, title='Wartezeit zwischen b1 und b5' + ' für ' + type_name,
+                                y_label='Anzahl', x_label='Wartezeit[min]',
+                                filename='Wartezeit zwischen b1 und b5 für ' + type_name + '.png', bins=100)
+
+
+def plot_passengers_in_system(dfs, type_name, number_of_weeks):
+    numbers_by_time = {}
+    # iterate over all seconds within a week with step size of one hour
+    for key_elements in dfs:
+        numbers_by_time[key_elements] = []
+        for i in range(0, 60 * 60 * 24 * 7, time_step_size):
+            numbers_by_time[key_elements].append(len(dfs[key_elements][
+                                                         (dfs[key_elements].b1_timestamp % (60 * 60 * 24 * 7) <= i) & (
+                                                                 dfs[key_elements].b5_timestamp % (
+                                                                 60 * 60 * 24 * 7) > i)]) // number_of_weeks)
+
+    print(len(range(0, 60 * 60 * 24 * 7, time_step_size)))
+    for key_elements in numbers_by_time:
+        print(len(numbers_by_time[key_elements]))
+    plot_and_save_passengers_in_system(numbers_by_time, y_label='Anzahl', x_label='Zeit[min]',
+                                       title="Anzahl Passagiere in System für " + type_name,
+                                       filename=type_name + '.png')
+
+
+def plot_SLA(dfs, type_name):
+    numbers_by_time = {}
+    # iterate over all seconds within a week with step size of one hour
+    for key_elements in dfs:
+        numbers_by_time[key_elements] = []
+        for i in range(0, 60 * 60 * 24 * 7, time_step_size_SLA):
+            # percentage of passengers within SLA
+            try:
+                numbers_by_time[key_elements].append(len(dfs[key_elements][
+                                                             (dfs[key_elements].b5_timestamp % (
+                                                                     60 * 60 * 24 * 7) > i) & (
+                                                                     dfs[key_elements].b5_timestamp % (
+                                                                     60 * 60 * 24 * 7) <= i + time_step_size_SLA) & (
+                                                                     dfs[key_elements].b1_b5_diff <= SLA_time)]) / len(
+                    dfs[key_elements][(dfs[key_elements].b5_timestamp % (60 * 60 * 24 * 7) > i) & (
+                            dfs[key_elements].b5_timestamp % (60 * 60 * 24 * 7) <= i + time_step_size_SLA)]))
+                print("worked")
+            except ZeroDivisionError:
+                numbers_by_time[key_elements].append(0)
+    plot_and_save_sla(numbers_by_time, y_label='Anzahl', x_label='Zeit[min]',
+                      title="SLA für " + type_name,
+                      filename=type_name + '.png')
 
 
 def analyze_waiting_times(df, type_name):
@@ -159,6 +239,8 @@ if __name__ == '__main__':
     open("waiting_times.txt", "w").close()
 
     Path("WaitingTimes/").mkdir(parents=True, exist_ok=True)
+    Path("CountPassengers/").mkdir(parents=True, exist_ok=True)
+    Path("SLA/").mkdir(parents=True, exist_ok=True)
     all_df = {}
     for key in data_files:
         all_df[key] = pd.read_csv(data_files[key], sep=';')
@@ -169,6 +251,8 @@ if __name__ == '__main__':
         all_df[key] = add_data_fields(all_df[key])
 
     plot_waiting_times(all_df, 'alle')
+    # plot_passengers_in_system(all_df, 'alle', 3)
+    plot_SLA(all_df, 'alle')
     for key in all_df:
         analyze_waiting_times(all_df[key], key)
         print('SLA ' + key + ':', str(len(all_df[key][all_df[key].b1_b5_diff <= (60 * 30)]) / len(all_df[key]))[0: 8])
