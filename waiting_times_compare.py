@@ -19,24 +19,18 @@ from pathlib import Path
 time_SLA = 60 * 30
 
 data_files = {
-    "simuliert Passagieranstieg": 'sim_data/sim_data_pass_inc.csv',
-    # "simuliert Passagieranstieg mit 2 business-WTMD": 'sim_data_2WTMD_pass_inc.csv',
-    # "simuliert Passagieranstieg mit 3 Border Control": 'sim_data_pass_inc_3BC.csv',
-    # "simuliert Passagieranstieg mit 2 business-WTMD und 3 Border Control": 'sim_data_2WTMD_pass_inc_3BC.csv',
-    # "simuliert mit Systemausfall mit Passagieranstieg mit 2 business-WTMD": 'sim_data_2WTMD_sys_failure_pass_inc.csv',
-    # "simuliert mit Systemausfall mit Passagieranstieg mit 3 Border Control": 'sim_data_sys_failure_pass_inc_3BC.csv',
-    #"simuliert mit Systemausfall mit Passagieranstieg mit 2 business-WTMD und 3 Border Control": 'data/sim_data_2WTMD_sys_failure_pass_inc_3BC.csv',
-    #"simuliert mit Systemausfall mit Passagieranstieg mit 2 business-WTMD und 4 Border Control": 'data/sim_data_2WTMD_sys_failure_pass_inc_4BC.csv',
-    "normal: Passagieranstieg, 3 business-WTMD und 5 Border Control": 'sim_data/sim_data_3WTMD_sys_failure_pass_inc_5BC.csv',
-    #"simuliert mit Systemausfall mit Passagieranstieg mit 3 business-WTMD und immer 5 Border Control": 'data/sim_data_pass_inc_always5BC.csv',
-    "früher": 'sim_data/sim_data_early_2WTMD_pass_inc_5BC.csv',
-    "später 1h": 'sim_data/sim_data_1late_2WTMD_pass_inc_5BC.csv',
-    "später 2h": 'sim_data/sim_data_2late_2WTMD_pass_inc_5BC.csv',
+    "historische Daten": 'sim_data/data.csv',
+    "simuliert": 'sim_data/sim_data.csv',
+    "simuliert mit Passagieranstieg": 'sim_data/sim_data_pass_inc.csv',
+    # "normal: Passagieranstieg, 3 business-WTMD und 5 Border Control": 'sim_data/sim_data_3WTMD_sys_failure_pass_inc_5BC.csv',
+    "+1 business-WTMD, +1 Border-Controll agents": 'sim_data/sim_data_1late_1WTMD_3BC.csv',
+    "+1 business-WTMD, +1 Border-Controll agents mit Passagieranstieg": 'sim_data/sim_data_1late_1WTMD_pass_inc_3BC.csv',
 }
 
 time_step_size = 60 * 60
 time_step_size_SLA = 60 * 60
-SLA_time = 30 * 60
+SLA_time = 60 * 30
+business_only = False
 
 
 def plot_and_save_waiting_times(datas_to_plot, title, x_label, y_label, filename, bins):
@@ -96,7 +90,8 @@ def cleanup_data(raw_data):
     # remove blanks
     raw_data.replace("", np.nan, inplace=True)
     raw_data.dropna(subset=['b5'], inplace=True)
-    # raw_data = raw_data[raw_data.type == 'business']
+    if business_only:
+        raw_data = raw_data[raw_data.type == 'business']
     return raw_data
 
 
@@ -268,7 +263,6 @@ if __name__ == '__main__':
         all_df[key] = pd.read_csv(data_files[key], sep=';')
 
     for key in all_df:
-        print(key)
         all_df[key] = cleanup_data(all_df[key])
         all_df[key] = add_timestamps(all_df[key])
         all_df[key] = add_data_fields(all_df[key])
