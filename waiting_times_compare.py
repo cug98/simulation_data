@@ -16,19 +16,22 @@ from pathlib import Path
 #     "simuliert mit 2 business-WTMD und Systemausfall": 'sim_data_2WTMD_sys_failure.csv',
 # }
 
-time_SLA = 60 * 35
+time_SLA = 60 * 30
 
 data_files = {
-    "simuliert Passagieranstieg": 'sim_data_pass_inc.csv',
+    "simuliert Passagieranstieg": 'sim_data/sim_data_pass_inc.csv',
     # "simuliert Passagieranstieg mit 2 business-WTMD": 'sim_data_2WTMD_pass_inc.csv',
     # "simuliert Passagieranstieg mit 3 Border Control": 'sim_data_pass_inc_3BC.csv',
     # "simuliert Passagieranstieg mit 2 business-WTMD und 3 Border Control": 'sim_data_2WTMD_pass_inc_3BC.csv',
     # "simuliert mit Systemausfall mit Passagieranstieg mit 2 business-WTMD": 'sim_data_2WTMD_sys_failure_pass_inc.csv',
     # "simuliert mit Systemausfall mit Passagieranstieg mit 3 Border Control": 'sim_data_sys_failure_pass_inc_3BC.csv',
-    "simuliert mit Systemausfall mit Passagieranstieg mit 2 business-WTMD und 3 Border Control": 'sim_data_2WTMD_sys_failure_pass_inc_3BC.csv',
-    "simuliert mit Systemausfall mit Passagieranstieg mit 2 business-WTMD und 4 Border Control": 'sim_data_2WTMD_sys_failure_pass_inc_4BC.csv',
-    "simuliert mit Systemausfall mit Passagieranstieg mit 3 business-WTMD und 5 Border Control": 'sim_data_3WTMD_sys_failure_pass_inc_5BC.csv',
-    "simuliert mit Systemausfall mit Passagieranstieg mit 3 business-WTMD und immer 5 Border Control": 'sim_data_pass_inc_always5BC.csv',
+    #"simuliert mit Systemausfall mit Passagieranstieg mit 2 business-WTMD und 3 Border Control": 'data/sim_data_2WTMD_sys_failure_pass_inc_3BC.csv',
+    #"simuliert mit Systemausfall mit Passagieranstieg mit 2 business-WTMD und 4 Border Control": 'data/sim_data_2WTMD_sys_failure_pass_inc_4BC.csv',
+    "normal: Passagieranstieg, 3 business-WTMD und 5 Border Control": 'sim_data/sim_data_3WTMD_sys_failure_pass_inc_5BC.csv',
+    #"simuliert mit Systemausfall mit Passagieranstieg mit 3 business-WTMD und immer 5 Border Control": 'data/sim_data_pass_inc_always5BC.csv',
+    "früher": 'sim_data/sim_data_early_2WTMD_pass_inc_5BC.csv',
+    "später 1h": 'sim_data/sim_data_1late_2WTMD_pass_inc_5BC.csv',
+    "später 2h": 'sim_data/sim_data_2late_2WTMD_pass_inc_5BC.csv',
 }
 
 time_step_size = 60 * 60
@@ -37,7 +40,7 @@ SLA_time = 30 * 60
 
 
 def plot_and_save_waiting_times(datas_to_plot, title, x_label, y_label, filename, bins):
-    plt.rcParams.update({'figure.figsize': (7, 9), 'figure.dpi': 100})
+    plt.rcParams.update({'figure.figsize': (7, 9), 'figure.dpi': 1000})
     fig, axs = plt.subplots(len(list(datas_to_plot)), 1, sharex='all', sharey='all')
     plt.suptitle(title)
 
