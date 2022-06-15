@@ -5,30 +5,26 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from pathlib import Path
-
-# data_files = {
-#     "alle historisch": 'data.csv',
-#     "simuliert": 'sim_data.csv',
-#     "simuliert mit 1 business-WTMD": 'sim_data_1WTMD.csv',
-#     "simuliert mit 2 business-WTMD": 'sim_data_2WTMD.csv',
-#     "simuliert mit Systemausfall": 'sim_data_sys_failure.csv',
-#     "simuliert mit 1 business-WTMD und Systemausfall": 'sim_data_1WTMD_sys_failure.csv',
-#     "simuliert mit 2 business-WTMD und Systemausfall": 'sim_data_2WTMD_sys_failure.csv',
-# }
-
-time_SLA = 60 * 30
+from statistics import mean
 
 data_files = {
     "historische Daten": 'sim_data/data.csv',
     "simuliert": 'sim_data/sim_data.csv',
     "simuliert mit Passagieranstieg": 'sim_data/sim_data_pass_inc.csv',
-    # "normal: Passagieranstieg, 3 business-WTMD und 5 Border Control": 'sim_data/sim_data_3WTMD_sys_failure_pass_inc_5BC.csv',
-    "+1 business-WTMD, +1 Border-Controll agents": 'sim_data/sim_data_1late_1WTMD_3BC.csv',
-    "+1 business-WTMD, +1 Border-Controll agents mit Passagieranstieg": 'sim_data/sim_data_1late_1WTMD_pass_inc_3BC.csv',
+    "simuliert mit Systemausfall": 'sim_data/sim_data_sys_failure.csv',
+    "Verbesserung": 'sim_data/sim_data_1late_1WTMD_3BC.csv',
+    "Verbesserung mit Passagieranstieg": 'sim_data/sim_data_1late_1WTMD_pass_inc_3BC.csv',
+    "Verbesserung mit Systemausfall": 'sim_data/sim_data_1late_1WTMD_3BC_sys_fail.csv',
 }
+# for count of passengers in system
+time_step_size_passengers = 60 * 5
 
-time_step_size = 60 * 60
-time_step_size_SLA = 60 * 60
+# for time window during which SLA is examined
+time_step_size_SLA = 60 * 30
+
+# for time window during which average waiting times is examined
+time_step_size_means = 60 * 10
+
 SLA_time = 60 * 30
 business_only = False
 
@@ -60,11 +56,28 @@ def plot_and_save_passengers_in_system(datas_to_plot, x_label, y_label, title, f
     plt.suptitle(title)
     for i, key_element in enumerate(datas_to_plot):
         axs[i].set(title=key_element, xlabel=x_label, ylabel=y_label)
-        axs[i].bar(range(0, 60 * 60 * 24 * 7, time_step_size), datas_to_plot[key_element], width=time_step_size)
+        axs[i].bar(range(0, 60 * 60 * 24 * 7, time_step_size_passengers), datas_to_plot[key_element],
+                   width=time_step_size_passengers)
 
     fig.tight_layout()
 
     folder = 'CountPassengers/'
+    plt.savefig(folder + filename)
+    # plt.show()
+
+
+def plot_and_save_average_waiting_times(datas_to_plot, x_label, y_label, title, filename):
+    plt.rcParams.update({'figure.figsize': (7, 9), 'figure.dpi': 1000})
+    fig, axs = plt.subplots(len(list(datas_to_plot)), 1, sharex='all', sharey='all')
+    plt.suptitle(title)
+    for i, key_element in enumerate(datas_to_plot):
+        axs[i].set(title=key_element, xlabel=x_label, ylabel=y_label)
+        axs[i].bar(range(0, 60 * 60 * 24 * 7, time_step_size_means), datas_to_plot[key_element],
+                   width=time_step_size_means)
+
+    fig.tight_layout()
+
+    folder = 'AverageWaitingTimes/'
     plt.savefig(folder + filename)
     # plt.show()
 
@@ -109,9 +122,6 @@ def add_timestamps(raw_data):
 
 def add_data_fields(raw_data):
     """ add extra columns like time for completion for every passenger """
-    # boolean value whether day of arrival is weekday or not
-    # raw_data['is_weekday'] = raw_data.apply(lambda row: is_weekday(row), axis=1)
-
     # add column with weekday number
     raw_data['weekday'] = raw_data.apply(lambda row: datetime.fromtimestamp(row['b1_timestamp']).weekday(), axis=1)
 
@@ -180,15 +190,35 @@ def plot_passengers_in_system(dfs, type_name, number_of_weeks):
     # iterate over all seconds within a week with step size of one hour
     for key_elements in dfs:
         numbers_by_time[key_elements] = []
-        for i in range(0, 60 * 60 * 24 * 7, time_step_size):
+        for i in range(0, 60 * 60 * 24 * 7, time_step_size_passengers):
             numbers_by_time[key_elements].append(len(dfs[key_elements][
                                                          (dfs[key_elements].b1_timestamp % (60 * 60 * 24 * 7) <= i) & (
                                                                  dfs[key_elements].b5_timestamp % (
                                                                  60 * 60 * 24 * 7) > i)]) // number_of_weeks)
 
-    plot_and_save_passengers_in_system(numbers_by_time, y_label='Anzahl', x_label='Zeit[h]',
+    plot_and_save_passengers_in_system(numbers_by_time, y_label='Anzahl', x_label='Systemzeit[s]',
                                        title="Anzahl Passagiere in System für " + type_name,
                                        filename=type_name + '.png')
+
+
+def plot_average_waiting_times(dfs, type_name):
+    means_by_time = {}
+    # iterate over all seconds within a week with step size of one hour
+    for key_elements in dfs:
+        means_by_time[key_elements] = []
+        for i in range(0, 60 * 60 * 24 * 7, time_step_size_means):
+            list_all_relevant_passengers = dfs[key_elements][
+                (dfs[key_elements].b5_timestamp % (60 * 60 * 24 * 7) >= i) & (
+                        dfs[key_elements].b5_timestamp % (60 * 60 * 24 * 7) < i + time_step_size_means)]['b1_b5_diff']
+            try:
+                means_by_time[key_elements].append(mean(list_all_relevant_passengers) / 60)
+            except statistics.StatisticsError:
+                # if not possible to calculate waiting time use last value
+                means_by_time[key_elements].append(means_by_time[key_elements][-1])
+
+    plot_and_save_average_waiting_times(means_by_time, y_label='Wartezeit[min]', x_label='Systemzeit[s]',
+                                        title="Durchschnittliche Wartezeit für " + type_name,
+                                        filename=type_name + '.png')
 
 
 def plot_SLA(dfs, type_name):
@@ -209,7 +239,7 @@ def plot_SLA(dfs, type_name):
                             dfs[key_elements].b5_timestamp % (60 * 60 * 24 * 7) <= i + time_step_size_SLA)]))
             except ZeroDivisionError:
                 numbers_by_time[key_elements].append(0)
-    plot_and_save_sla(numbers_by_time, y_label='Anzahl', x_label='Zeit[h]',
+    plot_and_save_sla(numbers_by_time, y_label='Anzahl', x_label='Systemzeit[s]',
                       title="SLA für " + type_name,
                       filename=type_name + '.png')
 
@@ -257,6 +287,7 @@ if __name__ == '__main__':
 
     Path("WaitingTimes/").mkdir(parents=True, exist_ok=True)
     Path("CountPassengers/").mkdir(parents=True, exist_ok=True)
+    Path("AverageWaitingTimes/").mkdir(parents=True, exist_ok=True)
     Path("SLA/").mkdir(parents=True, exist_ok=True)
     all_df = {}
     for key in data_files:
@@ -267,9 +298,24 @@ if __name__ == '__main__':
         all_df[key] = add_timestamps(all_df[key])
         all_df[key] = add_data_fields(all_df[key])
 
+    print('plotting waiting means...')
+    plot_average_waiting_times(all_df, 'alle')
+    print('plotting waiting times...')
     plot_waiting_times(all_df, 'alle')
+    print('plotting passenger counts...')
     plot_passengers_in_system(all_df, 'alle', 3)
+    print('plotting SLA...')
     plot_SLA(all_df, 'alle')
+
+    print('analyzing data...')
     for key in all_df:
         analyze_waiting_times(all_df[key], key)
-        print('SLA ' + key + ':', str(len(all_df[key][all_df[key].b1_b5_diff <= time_SLA]) / len(all_df[key]))[0: 8])
+
+    outfile = open("waiting_times.txt", "a")
+    outfile.write('\n\n')
+    outfile.write('*' * 80 + '\n')
+    for key in all_df:
+        outfile.write('SLA ' + key + ':' + str(len(all_df[key][all_df[key].b1_b5_diff <= SLA_time]) / len(all_df[key]))[
+                                           0: 8] + '\n')
+        print('SLA ' + key + ':', str(len(all_df[key][all_df[key].b1_b5_diff <= SLA_time]) / len(all_df[key]))[0: 8])
+    outfile.close()
